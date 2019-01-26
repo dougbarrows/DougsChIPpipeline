@@ -1,0 +1,11 @@
+Package: DougsChIPpipeline
+Type: Package
+Title: Doug's ChIPseq pipeline (alignment, bigwig, peaks, QC)
+Version: 0.1
+Date: 20190126
+Author: Doug
+Maintainer: Doug Barrows <dbarrows@rockefeller.edu>
+Description:  Doug's ChIPseq pipeline (alignment, bigwig, peaks, QC)
+License: GPL V3
+RoxygenNote: 6.1.1
+Imports: ShortRead, Rsubread, Rsamtools, BSgenome.Hsapiens.UCSC.hg38, BSgenome.Hsapiens.UCSC.hg19, BSgenome.Mmusculus.UCSC.mm9, BSgenome.Mmusculus.UCSC.mm10, rtracklayer, GenomicAlignments, ggplot2, ChIPQC, devtools, soGGi, TxDb.Hsapiens.UCSC.hg19.knownGene, TxDb.Hsapiens.UCSC.hg38.knownGene, TxDb.Mmusculus.UCSC.mm9.knownGene, TxDb.Mmusculus.UCSC.mm10.knownGene, ChIPseeker
