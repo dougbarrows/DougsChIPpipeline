@@ -17,7 +17,7 @@
 #' @examples
 #' message("coming soon!")
 #' @export
-#' @import ShortRead Rsubread Rsamtools BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg19 BSgenome.Mmusculus.UCSC.mm9 BSgenome.Mmusculus.UCSC.mm10 rtracklayer GenomicAlignments ggplot2 ChIPQC devtools soGGi TxDb.Hsapiens.UCSC.hg19.knownGene TxDb.Hsapiens.UCSC.hg38.knownGene TxDb.Mmusculus.UCSC.mm9.knownGene TxDb.Mmusculus.UCSC.mm10.knownGene ChIPseeker
+#' @import GenomeInfoDb ShortRead Rsubread Rsamtools BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg19 BSgenome.Mmusculus.UCSC.mm9 BSgenome.Mmusculus.UCSC.mm10 rtracklayer GenomicAlignments ggplot2 ChIPQC devtools soGGi TxDb.Hsapiens.UCSC.hg19.knownGene TxDb.Hsapiens.UCSC.hg38.knownGene TxDb.Mmusculus.UCSC.mm9.knownGene TxDb.Mmusculus.UCSC.mm10.knownGene ChIPseeker
 
 
 fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_sheet_path,  bw = 300, q = 0.05, genome, blacklist_path) {
@@ -118,7 +118,7 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_s
         print("Building index...")
 
         if (genome == "hg19") {
-          mainChromosomes <- paste0("chr", c(1:19, "X", "Y", "M"))
+          mainChromosomes <- paste0("chr", c(1:22, "X", "Y", "M"))
           mainChrSeq <-
             lapply(mainChromosomes, function(x)
               BSgenome.Hsapiens.UCSC.hg19[[x]])
@@ -133,11 +133,12 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_s
           #From Toms course - The Rsubread package offers a faster aligner than the QuasR package (bowtie for R) although the Rsubread package only works on Macs. For alignment with the Rsubread package we must first build our genome index for Rsubread using the buildindex() function.The buildindex() function simply takes the parameters of our desired index name and the FASTA file to build index from.
 
           buildindex("BSgenome.Hsapiens.UCSC.hg19",
-                     "BSgenome.Hsapiens.UCSC.hg19.fa")
+                     "BSgenome.Hsapiens.UCSC.hg19.fa",
+                     memory = 1000)
         }
 
         if (genome == "hg38") {
-          mainChromosomes <- paste0("chr", c(1:19, "X", "Y", "M"))
+          mainChromosomes <- paste0("chr", c(1:22, "X", "Y", "M"))
           mainChrSeq <-
             lapply(mainChromosomes, function(x)
               BSgenome.Hsapiens.UCSC.hg38[[x]])
@@ -148,7 +149,8 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_s
                           "BSgenome.Hsapiens.UCSC.hg38.fa")
 
           buildindex("BSgenome.Hsapiens.UCSC.hg38",
-                     "BSgenome.Hsapiens.UCSC.hg38.fa")
+                     "BSgenome.Hsapiens.UCSC.hg38.fa",
+                     memory = 1000)
         }
 
         if (genome == "mm9") {
@@ -163,7 +165,8 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_s
                           "BSgenome.Mmusculus.UCSC.mm9.fa")
 
           buildindex("BSgenome.Mmusculus.UCSC.mm9",
-                     "BSgenome.Mmusculus.UCSC.mm9.fa")
+                     "BSgenome.Mmusculus.UCSC.mm9.fa",
+                     memory = 1000)
         }
 
         if (genome == "mm10") {
@@ -178,7 +181,8 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_s
                           "BSgenome.Mmusculus.UCSC.mm10.fa")
 
           buildindex("BSgenome.Mmusculus.UCSC.mm10",
-                     "BSgenome.Mmusculus.UCSC.mm10.fa")
+                     "BSgenome.Mmusculus.UCSC.mm10.fa",
+                     memory = 1000)
         }
       }
     }
@@ -272,27 +276,27 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_s
     ggsave(paste0(BAM_path, fastq[i], "_chromDistr.pdf"))
 
     #######
-    # ChIP QC
+    # ChIP QC - this isnt working at the moment get either "Error in getListElement(x, i, ...) : GRanges objects don't support [[, as.list(), lapply(), or unlist() at the moment" or "Error in seqlevels(RegionRanges, "coarse") <- AllChr : could not find function "seqlevels<-"
     ########
 
     # using the pre-filtered BAM
-    print(paste0("ChIP QC for unfiltered ", fastq[i], "..."))
+    #print(paste0("ChIP QC for unfiltered ", fastq[i], "..."))
 
-    QCresult <- ChIPQCsample(reads = sorted_bam_post,
-                             annotation = genome,
-                             blacklist = blacklist_path)
-    out <- capture.output(QCmetrics(QCresult))
-    cat("ChIP QC Metrics for unfiltered", out, file = paste0(ChIPQC_path, "/", fastq[i], "_ChIPQC_output.txt"), sep = "\n", append = TRUE)
+    #QCresult <- ChIPQCsample(reads = sorted_bam_post,
+    #                         annotation = genome,
+    #                         blacklist = blacklist_path)
+    #out <- capture.output(QCmetrics(QCresult))
+    #cat("ChIP QC Metrics for unfiltered", out, file = paste0(ChIPQC_path, "/", fastq[i], "_ChIPQC_output.txt"), sep = "\n", append = TRUE)
 
-    myFlags <- flagtagcounts(QCresult)
-    out <- capture.output(myFlags["DuplicateByChIPQC"]/myFlags["Mapped"])
-    cat( out, file = paste0(ChIPQC_path, "/", fastq[i], "_ChIPQC_output.txt"), sep = "\n", append = TRUE)
+    #myFlags <- flagtagcounts(QCresult)
+    #out <- capture.output(myFlags["DuplicateByChIPQC"]/myFlags["Mapped"])
+    #cat( out, file = paste0(ChIPQC_path, "/", fastq[i], "_ChIPQC_output.txt"), sep = "\n", append = TRUE)
 
-    plotCC(QCresult) + ggtitle(fastq[i])
-    ggsave(paste0(ChIPQC_path, "/", fastq[i], "_ChIPQC_CCplot.pdf"))
+    #plotCC(QCresult) + ggtitle(fastq[i])
+    #ggsave(paste0(ChIPQC_path, "/", fastq[i], "_ChIPQC_CCplot.pdf"))
 
-    plotSSD(QCresult)+xlim(0,5) + ggtitle(fastq[i])
-    ggsave(paste0(ChIPQC_path, "/", fastq[i], "_ChIPQC_SSDplot.pdf"))
+    #plotSSD(QCresult)+xlim(0,5) + ggtitle(fastq[i])
+    #ggsave(paste0(ChIPQC_path, "/", fastq[i], "_ChIPQC_SSDplot.pdf"))
 
     ######
 
@@ -303,12 +307,12 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_s
     reads_coverage <- coverage(alignment)
 
     export.bw(reads_coverage, con = paste0(bigwig_path, base, "_bigWig.bw"))
-  }
 
-  # this is from Tom's course and will produce a normalized bigwig where reads are scaled to the number of mapped reads multiplied by a million (reads per million)
-  coverage_norm <- coverage(alignment,
-                            weight = (10^6)/TotalMapped)
-  export.bw(coverage_norm, paste0(bigwig_path, base, "_bigWig_norm.bw"))
+    # this is from Tom's course and will produce a normalized bigwig where reads are scaled to the number of mapped reads multiplied by a million (reads per million)
+    coverage_norm <- coverage(alignment,
+                              weight = (10^6)/TotalMapped)
+    export.bw(coverage_norm, con = paste0(bigwig_path, base, "_bigWig_norm.bw"))
+  }
 
   ##########
   # get plots over genes using soGGi

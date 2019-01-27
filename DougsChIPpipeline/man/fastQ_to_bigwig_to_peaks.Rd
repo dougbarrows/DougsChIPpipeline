@@ -4,7 +4,7 @@
 \alias{fastQ_to_bigwig_to_peaks}
 \title{ChIPseq Pipeline (fastq to bw to peaks)}
 \usage{
-fastQ_to_bigwig_to_peaks(fastq_path, mapq = 15, buildIndex = FALSE,
+fastQ_to_bigwig_to_peaks(fastq_path, mapq = 15, buildIndex,
   sample_sheet_path, bw = 300, q = 0.05, genome, blacklist_path)
 }
 \arguments{
