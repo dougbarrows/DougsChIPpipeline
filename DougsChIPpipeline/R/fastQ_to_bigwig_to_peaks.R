@@ -12,6 +12,7 @@
 #' @param q MACS2 argument if calling peaks, default is 0.05
 #' @param genome gemone used for alignments, etc
 #' @param blacklist_path path to blacklist bed file (include this as data once you know how to do that?)
+#' @param index_basename the name of the index file for alignment, assuming it isn't built within the pipeline
 #' @details NA
 #' @return many things
 #' @examples
@@ -20,7 +21,7 @@
 #' @import GenomeInfoDb ShortRead Rsubread Rsamtools BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg19 BSgenome.Mmusculus.UCSC.mm9 BSgenome.Mmusculus.UCSC.mm10 rtracklayer GenomicAlignments ggplot2 ChIPQC devtools soGGi TxDb.Hsapiens.UCSC.hg19.knownGene TxDb.Hsapiens.UCSC.hg38.knownGene TxDb.Mmusculus.UCSC.mm9.knownGene TxDb.Mmusculus.UCSC.mm10.knownGene ChIPseeker
 
 
-fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_sheet_path,  bw = 300, q = 0.05, genome, blacklist_path) {
+fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, index_basename, sample_sheet_path,  bw = 300, q = 0.05, genome, blacklist_path) {
 
   ################
   # must have BSgenome index files for Rsubread in the same folder as this markdown
@@ -135,6 +136,7 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_s
           buildindex("BSgenome.Hsapiens.UCSC.hg19",
                      "BSgenome.Hsapiens.UCSC.hg19.fa",
                      memory = 1000)
+          index_basename <- "BSgenome.Hsapiens.UCSC.hg19"
         }
 
         if (genome == "hg38") {
@@ -151,6 +153,7 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_s
           buildindex("BSgenome.Hsapiens.UCSC.hg38",
                      "BSgenome.Hsapiens.UCSC.hg38.fa",
                      memory = 1000)
+          index_basename <- "BSgenome.Hsapiens.UCSC.hg38"
         }
 
         if (genome == "mm9") {
@@ -167,6 +170,7 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_s
           buildindex("BSgenome.Mmusculus.UCSC.mm9",
                      "BSgenome.Mmusculus.UCSC.mm9.fa",
                      memory = 1000)
+          index_basename <- "BSgenome.Mmusculus.UCSC.mm9"
         }
 
         if (genome == "mm10") {
@@ -183,6 +187,7 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_s
           buildindex("BSgenome.Mmusculus.UCSC.mm10",
                      "BSgenome.Mmusculus.UCSC.mm10.fa",
                      memory = 1000)
+          index_basename <- "BSgenome.Mmusculus.UCSC.mm10"
         }
       }
     }
@@ -204,41 +209,12 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex, sample_s
 
     print(paste0("Aligning ", fastq[i], "..."))
 
-    if (genome == "hg19") {
-      out <- capture.output(align(index = "BSgenome.Hsapiens.UCSC.hg19",
+    out <- capture.output(align(index = index_basename,
                                   readfile1 = filtered_fastq,
                                   output_file = paste0(BAM_path, bam),
                                   type="dna"))  # in Tom's class he had "phredOffset = 64" in this command too, but Rsubread kept throwing a warning saying it was wrong, so I'll just keep the default for now
 
-      cat( out, file = paste0(BAM_path, fastq[i], "_BAMlog.txt"), sep = "\n", append = TRUE)
-    }
-
-    if (genome == "hg38") {
-      out <- capture.output(align(index = "BSgenome.Hsapiens.UCSC.hg38",
-                                  readfile1 = filtered_fastq,
-                                  output_file = paste0(BAM_path, bam),
-                                  type="dna"))
-
-      cat( out, file = paste0(BAM_path, fastq[i], "_BAMlog.txt"), sep = "\n", append = TRUE)
-    }
-
-    if (genome == "mm9") {
-      out <- capture.output(align(index = "BSgenome.Mmusculus.UCSC.mm9",
-                                  readfile1 = filtered_fastq,
-                                  output_file = paste0(BAM_path, bam),
-                                  type="dna"))
-
-      cat( out, file = paste0(BAM_path, fastq[i], "_BAMlog.txt"), sep = "\n", append = TRUE)
-    }
-
-    if (genome == "mm10") {
-      out <- capture.output(align(index = "BSgenome.Mmusculus.UCSC.mm10",
-                                  readfile1 = filtered_fastq,
-                                  output_file = paste0(BAM_path, bam),
-                                  type="dna"))
-
-      cat( out, file = paste0(BAM_path, fastq[i], "_BAMlog.txt"), sep = "\n", append = TRUE)
-    }
+    cat( out, file = paste0(BAM_path, fastq[i], "_BAMlog.txt"), sep = "\n", append = TRUE)
 
     print(paste0("Sorting ", fastq[i], "..."))
     sorted_bam_pre <- paste0( BAM_path, base, "_sorted")
