@@ -13,15 +13,16 @@
 #' @param genome gemone used for alignments, etc
 #' @param blacklist_path path to blacklist bed file (include this as data once you know how to do that?)
 #' @param index_basename the name of the index file for alignment, assuming it isn't built within the pipeline
+#' @param onlyCallPeaks if you only want to call peaks and not do alignments, set this to true. You need the sample_sheet_path to have an argument as well
 #' @details NA
 #' @return many things
 #' @examples
 #' message("coming soon!")
 #' @export
-#' @import GenomeInfoDb ShortRead Rsubread Rsamtools BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg19 BSgenome.Mmusculus.UCSC.mm9 BSgenome.Mmusculus.UCSC.mm10 rtracklayer GenomicAlignments ggplot2 ChIPQC devtools soGGi TxDb.Hsapiens.UCSC.hg19.knownGene TxDb.Hsapiens.UCSC.hg38.knownGene TxDb.Mmusculus.UCSC.mm9.knownGene TxDb.Mmusculus.UCSC.mm10.knownGene ChIPseeker
+#' @import GenomicFeatures GenomeInfoDb ShortRead Rsubread Rsamtools BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg19 BSgenome.Mmusculus.UCSC.mm9 BSgenome.Mmusculus.UCSC.mm10 rtracklayer GenomicAlignments ggplot2 ChIPQC devtools soGGi TxDb.Hsapiens.UCSC.hg19.knownGene TxDb.Hsapiens.UCSC.hg38.knownGene TxDb.Mmusculus.UCSC.mm9.knownGene TxDb.Mmusculus.UCSC.mm10.knownGene ChIPseeker
 
 
-fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, index_basename, sample_sheet_path,  bw = 300, q = 0.05, genome, blacklist_path) {
+fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, index_basename, sample_sheet_path,  bw = 300, q = 0.05, genome, blacklist_path, onlyCallPeaks = FALSE, bam_files_callPeaks) {
 
   ################
   # must have BSgenome index files for Rsubread in the same folder as this markdown
@@ -36,6 +37,7 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, 
 
   # NOTE: the pipeline will not call peaks if you do not put a sample sheet path in the command
   ###########################
+if(onlyCallPeaks == FALSE){
 
   if(missing(buildIndex)) stop("No 'buildIndex' argument specified, indicate whether you want an index built")
 
@@ -64,6 +66,8 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, 
   dir.create(bigwig_path)
   ###########
 
+  writeLines(capture.output(sessionInfo()), paste0(fastq_path, "sessioninfo.txt"))
+
   # Now we loop through file to analyze each one
 
   bam_files <- vector(mode = "character", length = length(fastq))
@@ -78,7 +82,7 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, 
 
     # calculate the percent of duplicates in the fastq file
     shortread_fastq <- readFastq(paste0(fastq_path, fastq[i]))
-    dupLogical <- srduplicated(shortread_fastq)
+    dupLogical <- srduplicated(sread(shortread_fastq))
     numberOfDups <- table(dupLogical)
     perc_dups <- numberOfDups[2]/(numberOfDups[1] + numberOfDups[2])
     names(perc_dups) <- "Percent_Duplicates"
@@ -135,7 +139,8 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, 
 
           buildindex("BSgenome.Hsapiens.UCSC.hg19",
                      "BSgenome.Hsapiens.UCSC.hg19.fa",
-                     memory = 1000)
+                     memory = 5000,
+                     indexSplit = TRUE)
           index_basename <- "BSgenome.Hsapiens.UCSC.hg19"
         }
 
@@ -152,7 +157,8 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, 
 
           buildindex("BSgenome.Hsapiens.UCSC.hg38",
                      "BSgenome.Hsapiens.UCSC.hg38.fa",
-                     memory = 1000)
+                     memory = 5000,
+                     indexSplit = TRUE)
           index_basename <- "BSgenome.Hsapiens.UCSC.hg38"
         }
 
@@ -169,7 +175,8 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, 
 
           buildindex("BSgenome.Mmusculus.UCSC.mm9",
                      "BSgenome.Mmusculus.UCSC.mm9.fa",
-                     memory = 1000)
+                     memory = 5000,
+                     indexSplit = TRUE)
           index_basename <- "BSgenome.Mmusculus.UCSC.mm9"
         }
 
@@ -186,7 +193,8 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, 
 
           buildindex("BSgenome.Mmusculus.UCSC.mm10",
                      "BSgenome.Mmusculus.UCSC.mm10.fa",
-                     memory = 1000)
+                     memory = 5000,
+                     indexSplit = TRUE)
           index_basename <- "BSgenome.Mmusculus.UCSC.mm10"
         }
       }
@@ -294,49 +302,49 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, 
   # get plots over genes using soGGi
   ##########
 
-  print(paste0("Making gene region signal plots from bigwigs..."))
+  # print(paste0("Making gene region signal plots from bigwigs..."))
+  #
+  #
+  # # get GRanges object of all genes
+  #
+  #
+  # if (genome == "hg19") {
+  #   whole_gene <- genes(TxDb.Hsapiens.UCSC.hg19.knownGene)
+  # }
+  #
+  # if (genome == "hg38") {
+  #   whole_gene <- genes(TxDb.Hsapiens.UCSC.hg38.knownGene)
+  # }
+  #
+  # if (genome == "mm9") {
+  #   whole_gene <- genes(TxDb.Mmusculus.UCSC.mm9.knownGene)
+  # }
+  #
+  # if (genome == "mm10") {
+  #   whole_gene <- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
+  # }
+  #
+  # bigWigs <- list.files(paste0(fastq_path, "bigwigs"), full.names = TRUE)
+  # whole_gene_plots <- vector(mode = "list", length = length(bigWigs))
+  #
+  # names(whole_gene) <- NULL # needed to do this or the "percentOfRegion" setting below threw an error
+  #
+  # for (i in seq_along(bigWigs)) {
+  #
+  #   whole_gene_plots[[i]] <- regionPlot(bigWigs[i],
+  #                                       testRanges = whole_gene,
+  #                                       style = "percentOfRegion",
+  #                                       format = "bigwig")
+  #
+  # }
+  #
+  # # this will make a figure for each chip separately, need to work on code below in the chunk devoted to soGGi with either rbind, or the concatenation to get all in same plot. Basically it wouldn't properly concatenate in the for loop as I had it set up below.
+  # for(i in seq_along(whole_gene_plots)) {
+  #   plotRegion(whole_gene_plots[[i]])
+  #   ggsave(paste0(strsplit(metadata(whole_gene_plots[[i]])$names, ".bw", fixed = TRUE)[[1]], ".pdf"))
+  # }
 
-
-  # get GRanges object of all genes
-
-
-  if (genome == "hg19") {
-    whole_gene <- genes(TxDb.Hsapiens.UCSC.hg19.knownGene)
-  }
-
-  if (genome == "hg38") {
-    whole_gene <- genes(TxDb.Hsapiens.UCSC.hg38.knownGene)
-  }
-
-  if (genome == "mm9") {
-    whole_gene <- genes(TxDb.Mmusculus.UCSC.mm9.knownGene)
-  }
-
-  if (genome == "mm10") {
-    whole_gene <- genes(TxDb.Mmusculus.UCSC.mm10.knownGene)
-  }
-
-  bigWigs <- list.files(paste0(fastq_path, "bigwigs"), full.names = TRUE)
-  whole_gene_plots <- vector(mode = "list", length = length(bigWigs))
-
-  names(whole_gene) <- NULL # needed to do this or the "percentOfRegion" setting below threw an error
-
-  for (i in seq_along(bigWigs)) {
-
-    whole_gene_plots[[i]] <- regionPlot(bigWigs[i],
-                                        testRanges = whole_gene,
-                                        style = "percentOfRegion",
-                                        format = "bigwig")
-
-  }
-
-  # this will make a figure for each chip separately, need to work on code below in the chunk devoted to soGGi with either rbind, or the concatenation to get all in same plot. Basically it wouldn't properly concatenate in the for loop as I had it set up below.
-  for(i in seq_along(whole_gene_plots)) {
-    plotRegion(whole_gene_plots[[i]])
-    ggsave(paste0(strsplit(metadata(whole_gene_plots[[i]])$names, ".bw", fixed = TRUE)[[1]], ".pdf"))
-  }
-
-
+}
   ##############
 
   # Peak Calling
@@ -345,7 +353,9 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, 
 
   ###############
 
-
+  if (onlyCallPeaks == TRUE) {
+    bam_files <- bam_files_callPeaks
+  }
   if (!missing(sample_sheet_path)) {
     # call peaks with macs2
     print("Calling Peaks...")
@@ -400,7 +410,6 @@ fastQ_to_bigwig_to_peaks <- function(fastq_path, mapq = 15, buildIndex = FALSE, 
       }
       system(macsCommand)
 
-      #genomic annotation using the annotatePeak function
       if (genome == "hg19") {
         txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
       } else if (genome == "hg38") {

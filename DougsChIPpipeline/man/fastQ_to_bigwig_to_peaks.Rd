@@ -4,8 +4,9 @@
 \alias{fastQ_to_bigwig_to_peaks}
 \title{ChIPseq Pipeline (fastq to bw to peaks)}
 \usage{
-fastQ_to_bigwig_to_peaks(fastq_path, mapq = 15, buildIndex,
-  sample_sheet_path, bw = 300, q = 0.05, genome, blacklist_path)
+fastQ_to_bigwig_to_peaks(fastq_path, mapq = 15, buildIndex = FALSE,
+  index_basename, sample_sheet_path, bw = 300, q = 0.05, genome,
+  blacklist_path, onlyCallPeaks = FALSE, bam_files_callPeaks)
 }
 \arguments{
 \item{fastq_path}{path to the folder wehre the fastqs are}
@@ -13,6 +14,8 @@ fastQ_to_bigwig_to_peaks(fastq_path, mapq = 15, buildIndex,
 \item{mapq}{mapping quality score (mapq) used for filtering BAMs. The default is mapq = 15, which is what ChIPQC uses as its cut off}
 
 \item{buildIndex}{if TRUE this will build the index for the Rsubread alignment, only need to do this once.}
+
+\item{index_basename}{the name of the index file for alignment, assuming it isn't built within the pipeline}
 
 \item{sample_sheet_path}{Path to the sample sheet for peak calling. If this argument is not included, no peaks will be called.}
 
@@ -23,6 +26,8 @@ fastQ_to_bigwig_to_peaks(fastq_path, mapq = 15, buildIndex,
 \item{genome}{gemone used for alignments, etc}
 
 \item{blacklist_path}{path to blacklist bed file (include this as data once you know how to do that?)}
+
+\item{onlyCallPeaks}{if you only want to call peaks and not do alignments, set this to true. You need the sample_sheet_path to have an argument as well}
 }
 \value{
 many things
